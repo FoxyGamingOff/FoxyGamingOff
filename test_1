@@ -1,0 +1,7 @@
+
+def bienvenue():
+    nom = input("Quel est ton nom ? ")
+    print(f"Bienvenue, {nom} !")
+
+if __name__ == "__main__":
+    bienvenue()
