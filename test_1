@@ -1,7 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
 
-def bienvenue():
-    nom = input("Quel est ton nom ? ")
-    print(f"Bienvenue, {nom} !")
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
 
-if __name__ == "__main__":
-    bienvenue()
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .day {
+            background-color: #e1e1e1;
+            padding: 20px;
+            border-radius: 5px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .day-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .date {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .event {
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px;
+            margin-top: 10px;
+            border-radius: 5px;
+            min-height: 40px;
+        }
+
+        .edit-btn {
+            margin-top: 10px;
+            padding: 5px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .edit-btn:hover {
+            background-color: #1976D2;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Flèches pour changer de semaine */
+        .week-nav-btn {
+            font-size: 1.5em;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            color: #2196F3;
+            text-align: center;
+            display: inline-block;
+            margin: 20px;
+        }
+
+        .week-nav-btn:hover {
+            color: #1976D2;
+        }
+
+        /* Media queries pour l'adaptation mobile */
+        @media (max-width: 768px) {
+            .calendar {
+                grid-template-columns: repeat(2, 1fr); /* 2 colonnes sur écran moyen */
+            }
+
+            .day {
+                height: auto; /* Hauteur flexible pour les petits écrans */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .calendar {
+                grid-template-columns: 1fr; /* 1 colonne sur les petits écrans */
+            }
+
+            h1 {
+                font-size: 1.5em; /* Réduction de la taille du titre sur mobile */
+            }
+
+            .day-header {
+                font-size: 1.1em;
+            }
+
+            .date {
+                font-size: 1em;
+            }
+
+            .event {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Agenda de la semaine</h1>
+        <!-- Boutons de navigation de semaine -->
+        <button class="week-nav-btn" onclick="showPreviousWeek()">← Semaine précédente</button>
+        <button class="week-nav-btn" onclick="showNextWeek()">Semaine suivante →</button>
+        <div class="calendar" id="calendar">
+            <!-- Les jours seront remplis par JavaScript -->
+        </div>
+    </div>
+
+    <script>
+        // Variable pour suivre la semaine actuelle
+        let currentWeekStartDate = new Date();
+
+        // Fonction pour récupérer la date actuelle
+        function getCurrentDate() {
+            const today = new Date();
+            const day = today.getDate();
+            const month = today.getMonth();
+            const year = today.getFullYear();
+            return { day, month, year, today };
+        }
+
+        // Fonction pour générer la semaine actuelle
+        function generateWeek() {
+            const { day, month, year, today } = getCurrentDate();
+            const calendarElement = document.getElementById('calendar');
+            calendarElement.innerHTML = '';  // Réinitialise l'agenda
+
+            // Jours de la semaine
+            const daysOfWeek = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+            // Calcul de la date pour chaque jour de la semaine
+            let startOfWeek = new Date(currentWeekStartDate);
+            startOfWeek.setDate(currentWeekStartDate.getDate() - currentWeekStartDate.getDay()); // Récupère le dimanche de la semaine actuelle
+
+            // Création des blocs pour chaque jour de la semaine
+            for (let i = 0; i < 7; i++) {
+                const currentDay = new Date(startOfWeek);
+                currentDay.setDate(startOfWeek.getDate() + i); // Décale la date pour chaque jour de la semaine
+
+                const dayName = daysOfWeek[currentDay.getDay()];
+                const dateString = `${currentDay.getDate()} ${currentDay.toLocaleString('default', { month: 'long' })} ${currentDay.getFullYear()}`;
+
+                // Vérifie si la date est dans le passé
+                if (currentDay < today) {
+                    continue; // Ignore les jours passés
+                }
+
+                // Création de l'élément HTML pour chaque jour
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day');
+                
+                // Charger l'événement depuis le localStorage si disponible
+                const eventKey = `${currentDay.toLocaleDateString()}`; // Format de la date pour la clé
+                const storedEvent = localStorage.getItem(eventKey);
+                const eventContent = document.createElement('div');
+                eventContent.classList.add('event');
+                eventContent.textContent = storedEvent || "Aucun événement"; // Si pas d'événement sauvegardé, afficher "Aucun événement"
+
+                dayElement.innerHTML = `
+                    <div class="day-header">${dayName}</div>
+                    <div class="date">${dateString}</div>
+                `;
+                
+                // Ajouter le contenu d'événement au jour
+                dayElement.appendChild(eventContent);
+
+                // Ajouter un bouton pour modifier l'événement
+                const editButton = document.createElement('button');
+                editButton.classList.add('edit-btn');
+                editButton.textContent = "Modifier";
+                editButton.onclick = function () { editEvent(eventContent, editButton, eventKey); };
+
+                dayElement.appendChild(editButton);
+                
+                calendarElement.appendChild(dayElement);
+            }
+        }
+
+        // Fonction pour modifier l'événement
+        function editEvent(eventDiv, button, eventKey) {
+            // Permet à l'utilisateur d'éditer le texte directement dans la div événement
+            if (eventDiv.contentEditable === "false" || !eventDiv.contentEditable) {
+                eventDiv.contentEditable = "true";
+                eventDiv.focus();
+                button.textContent = "Sauvegarder";
+            } else {
+                eventDiv.contentEditable = "false";
+                button.textContent = "Modifier";
+
+                // Sauvegarder l'événement dans le localStorage
+                localStorage.setItem(eventKey, eventDiv.textContent.trim());
+
+                // Si l'événement est vide, remettre "Aucun événement"
+                if (eventDiv.textContent.trim() === "") {
+                    eventDiv.textContent = "Aucun événement";
+                }
+            }
+        }
+
+        // Fonction pour changer de semaine (semaine suivante)
+        function showNextWeek() {
+            currentWeekStartDate.setDate(currentWeekStartDate.getDate() + 7); // Avance d'une semaine
+            generateWeek();
+        }
+
+        // Fonction pour revenir à la semaine précédente
+        function showPreviousWeek() {
+            currentWeekStartDate.setDate(currentWeekStartDate.getDate() - 7); // Recule d'une semaine
+            generateWeek();
+        }
+
+        // Initialiser l'agenda avec la semaine actuelle
+        generateWeek();
+    </script>
+</body>
+</html>
